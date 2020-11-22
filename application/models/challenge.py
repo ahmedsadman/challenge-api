@@ -30,6 +30,9 @@ class Challenge(BaseModel):
             "expires_on": self.expires_on,
         }
 
+    def add_tag(self, user):
+        self.tags.append(user)
+
     def serialize_for_user(self, user):
         """Adds tag and submission information (if applicable) with the default serialization"""
         serialized = self.serialize()
