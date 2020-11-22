@@ -19,7 +19,9 @@ class User(BaseModel):
         backref=db.backref("followers", lazy="dynamic"),
         lazy="dynamic",
     )
+    created_challenges = db.relationship("Challenge", backref="author", lazy="dynamic")
     # followers -> backref
+    # tagged_in_challenges -> backref
 
     @hybrid_property
     def password(self):
