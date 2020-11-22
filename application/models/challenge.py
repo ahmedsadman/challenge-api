@@ -17,4 +17,6 @@ class Challenge(BaseModel):
         backref=db.backref("tagged_in_challenges", lazy="dynamic"),
     )
 
+    submissions = db.relationship("Submission", backref="challenge", lazy="dynamic")
+
     # author -> backref

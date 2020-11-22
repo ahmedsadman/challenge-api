@@ -20,6 +20,9 @@ class User(BaseModel):
         lazy="dynamic",
     )
     created_challenges = db.relationship("Challenge", backref="author", lazy="dynamic")
+    challenge_submissions = db.relationship(
+        "Submission", backref="user", lazy="dynamic"
+    )
     # followers -> backref
     # tagged_in_challenges -> backref
 
