@@ -2,7 +2,7 @@ from datetime import datetime
 from sqlalchemy.ext.hybrid import hybrid_property
 from application import db
 from werkzeug.security import check_password_hash, generate_password_hash
-from application.models import BaseModel
+from application.models import BaseModel, Challenge
 from application.tables import follower_map
 
 
@@ -49,6 +49,26 @@ class User(BaseModel):
         """Unfollow an user"""
         if self.is_following(user):
             self.following.remove(user)
+
+    def get_feed(self):
+        # challenges that the user is tagged in
+        tagged = self.tagged_in_challenges
+
+        # not tagged, but following the author
+        followed = Challenge.query.join(
+            follower_map, (follower_map.c.follows_id == Challenge.author_id)
+        ).filter(follower_map.c.user_id == self.id)
+
+        # challenges created by the user himself
+        own_challenges = self.created_challenges
+
+        # combine both and return
+        # TODO: Make the feed relevant to the user by sorting according to relevance
+        return (
+            tagged.union(followed)
+            .union(own_challenges)
+            .order_by(Challenge.created_on.desc())
+        )
 
     def serialize(self):
         return {"id": self.id, "name": self.name}

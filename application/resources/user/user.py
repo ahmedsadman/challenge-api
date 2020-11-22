@@ -1,6 +1,6 @@
 from flask import request
 from . import bp
-from application.models import User
+from application.models import User, Challenge
 from application.error_handlers import UserAlreadyExists, NotFound
 
 
@@ -28,3 +28,16 @@ def get_follower_list(user_id):
     if user:
         return {"followers": [u.serialize() for u in user.followers.all()]}
     raise NotFound("User does not exist")
+
+
+@bp.route("/<user_id>/feed", methods=["GET"])
+def get_user_feed(user_id):
+    user = User.query.get(user_id)
+    page = request.args.get("page") or 1
+    page = int(page)
+
+    if user:
+        feed = user.get_feed()
+        return Challenge.serialize_feed(user, feed)
+
+    raise NotFound("User not found")

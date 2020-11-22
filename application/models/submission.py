@@ -20,3 +20,15 @@ class Submission(BaseModel):
 
     # user -> backref
     # challenge -> backref
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "challenge_id": self.challenge_id,
+            "submitted_by": {"id": self.user.id, "name": self.user.name},
+            "answer": self.answer,
+            "completed": self.completed,
+            "is_correct": self.is_correct,
+            "created_on": self.submitted_on,
+            "updated_on": self.updated_on,
+        }
