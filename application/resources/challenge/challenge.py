@@ -1,19 +1,18 @@
 from flask import request
 from datetime import datetime
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from . import bp
 from application.models import User, Challenge, Submission
 from application.error_handlers import UserAlreadyExists, NotFound
 
 
 @bp.route("", methods=["POST"])
+@jwt_required
 def create_challenge():
     data = request.get_json()
     expires = datetime.strptime(data["expires_on"], "%Y-%m-%dT%H:%M:%S.%fz")
 
-    author = User.query.filter_by(id=data["author_id"]).first()
-
-    if author is None:
-        raise NotFound("User not found")
+    author = User.query.filter_by(id=get_jwt_identity()).first()
 
     new_challenge = Challenge(
         author=author, question=data["question"], expires_on=expires
@@ -29,26 +28,24 @@ def create_challenge():
 
 
 @bp.route("/<challenge_id>", methods=["GET"])
+@jwt_required
 def get_challenge(challenge_id):
     challenge = Challenge.query.get(challenge_id)
 
-    # if user id is given, serialize challenge in relation to that user
-    user_id = request.args.get("user_id")
-    if user_id:
-        user = User.query.get(user_id)
-        if user is not None:
-            return challenge.serialize_for_user(user)
-        raise NotFound("User not found")
-    return challenge.serialize()
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    return challenge.serialize_for_user(user)
 
 
 @bp.route("/<challenge_id>/submissions", methods=["GET"])
+@jwt_required
 def get_submissions(challenge_id):
     challenge = Challenge.query.get(challenge_id)
     return {"submissions": [item.serialize() for item in challenge.submissions.all()]}
 
 
 @bp.route("/<challenge_id>/submissions", methods=["POST"])
+@jwt_required
 def add_submission(challenge_id):
     data = request.get_json()
     challenge = Challenge.query.get(challenge_id)
@@ -59,12 +56,9 @@ def add_submission(challenge_id):
     current_time = datetime.utcnow()
 
     if current_time >= challenge.expires_on:
-        return {"message": "Challenge expired. Cannot accept answers now"}
+        return {"message": "Challenge expired. Cannot accept answers now"}, 400
 
-    user = User.query.get(data["user_id"])
-
-    if user is None:
-        raise NotFound("User not found")
+    user = User.query.get(get_jwt_identity())
 
     submission = Submission(challenge=challenge, user=user, answer=data["answer"])
     submission.save()
