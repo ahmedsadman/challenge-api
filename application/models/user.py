@@ -1,4 +1,5 @@
 from datetime import datetime
+from sqlalchemy import func
 from sqlalchemy.ext.hybrid import hybrid_property
 from application import db
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -69,6 +70,11 @@ class User(BaseModel):
             .union(own_challenges)
             .order_by(Challenge.created_on.desc())
         )
+
+    @classmethod
+    def find(cls, text):
+        """Find users whose name matches with the given text"""
+        return cls.query.filter(func.lower(cls.name).contains(text.lower()))
 
     def serialize(self):
         return {"id": self.id, "name": self.name}

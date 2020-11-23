@@ -84,3 +84,11 @@ def get_user_feed():
 def get_my_challenges():
     user = User.query.get(get_jwt_identity())
     return {"challenges": [item.serialize() for item in user.created_challenges.all()]}
+
+
+@bp.route("/find", methods=["GET"])
+def find_user():
+    string = request.args.get("text")
+    match = User.find(string)
+    result = [item.serialize() for item in match.all()]
+    return {"result": result}
